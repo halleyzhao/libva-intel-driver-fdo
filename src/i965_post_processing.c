@@ -1547,20 +1547,20 @@ static void i965_update_src_surface_static_parameter(
     int fourcc = pp_get_surface_fourcc(ctx, surface);
 
     switch (fourcc) {
-    case VA_FOURCC('Y', 'U', 'Y', '2'):
+    case VA_FOURCC_YUY2:
         pp_static_parameter->grf1.source_packed_u_offset = 1;
         pp_static_parameter->grf1.source_packed_v_offset = 3;
         break;
-    case VA_FOURCC('U', 'Y', 'V', 'Y'):
+    case VA_FOURCC_UYVY:
         pp_static_parameter->grf1.source_packed_y_offset = 1;
         pp_static_parameter->grf1.source_packed_v_offset = 2;
         break;
-    case VA_FOURCC('B', 'G', 'R', 'X'):
-    case VA_FOURCC('B', 'G', 'R', 'A'):
+    case VA_FOURCC_BGRX:
+    case VA_FOURCC_BGRA:
         pp_static_parameter->grf1.source_rgb_layout = 0;
         break;
-    case VA_FOURCC('R', 'G', 'B', 'X'):
-    case VA_FOURCC('R', 'G', 'B', 'A'):
+    case VA_FOURCC_RGBX:
+    case VA_FOURCC_RGBA:
         pp_static_parameter->grf1.source_rgb_layout = 1;
         break;
     default:
@@ -1578,20 +1578,20 @@ static void i965_update_dst_surface_static_parameter(
     int fourcc = pp_get_surface_fourcc(ctx, surface);
 
     switch (fourcc) {
-    case VA_FOURCC('Y', 'U', 'Y', '2'):
+    case VA_FOURCC_YUY2:
         pp_static_parameter->grf1.r1_2.load_and_save.destination_packed_u_offset = 1;
         pp_static_parameter->grf1.r1_2.load_and_save.destination_packed_v_offset = 3;
         break;
-    case VA_FOURCC('U', 'Y', 'V', 'Y'):
+    case VA_FOURCC_UYVY:
         pp_static_parameter->grf1.r1_2.load_and_save.destination_packed_y_offset = 1;
         pp_static_parameter->grf1.r1_2.load_and_save.destination_packed_v_offset = 2;
         break;
-    case VA_FOURCC('B', 'G', 'R', 'X'):
-    case VA_FOURCC('B', 'G', 'R', 'A'):
+    case VA_FOURCC_BGRX:
+    case VA_FOURCC_BGRA:
         pp_static_parameter->grf1.r1_2.csc.destination_rgb_layout = 0;
         break;
-    case VA_FOURCC('R', 'G', 'B', 'X'):
-    case VA_FOURCC('R', 'G', 'B', 'A'):
+    case VA_FOURCC_RGBX:
+    case VA_FOURCC_RGBA:
         pp_static_parameter->grf1.r1_2.csc.destination_rgb_layout = 1;
         break;
     default:
@@ -1764,19 +1764,19 @@ pp_set_media_rw_message_surface(VADriverContextP ctx, struct i965_post_processin
     dri_bo *bo;
     int fourcc = pp_get_surface_fourcc(ctx, surface);
     const int Y = 0;
-    const int U = ((fourcc == VA_FOURCC('Y', 'V', '1', '2')) ||
-                   (fourcc == VA_FOURCC('Y', 'V', '1', '6')))
+    const int U = ((fourcc == VA_FOURCC_YV12) ||
+                   (fourcc == VA_FOURCC_YV16))
                    ? 2 : 1;
-    const int V = ((fourcc == VA_FOURCC('Y', 'V', '1', '2')) ||
-                   (fourcc == VA_FOURCC('Y', 'V', '1', '6')))
+    const int V = ((fourcc == VA_FOURCC_YV12) ||
+                   (fourcc == VA_FOURCC_YV16))
                    ? 1 : 2;
     const int UV = 1;
-    int interleaved_uv = fourcc == VA_FOURCC('N', 'V', '1', '2');
-    int packed_yuv = (fourcc == VA_FOURCC('Y', 'U', 'Y', '2') || fourcc == VA_FOURCC('U', 'Y', 'V', 'Y')); 
-    int full_packed_format = (fourcc == VA_FOURCC('R', 'G', 'B', 'A') || 
-                              fourcc == VA_FOURCC('R', 'G', 'B', 'X') || 
-                              fourcc == VA_FOURCC('B', 'G', 'R', 'A') || 
-                              fourcc == VA_FOURCC('B', 'G', 'R', 'X'));
+    int interleaved_uv = fourcc == VA_FOURCC_NV12;
+    int packed_yuv = (fourcc == VA_FOURCC_YUY2 || fourcc == VA_FOURCC_UYVY);
+    int full_packed_format = (fourcc == VA_FOURCC_RGBA ||
+                              fourcc == VA_FOURCC_RGBX ||
+                              fourcc == VA_FOURCC_BGRA ||
+                              fourcc == VA_FOURCC_BGRX);
     int scale_factor_of_1st_plane_width_in_byte = 1;
                               
     if (surface->type == I965_SURFACE_TYPE_SURFACE) {
@@ -1836,7 +1836,7 @@ pp_set_media_rw_message_surface(VADriverContextP ctx, struct i965_post_processin
             height[2] = obj_image->image.height / 2;
             pitch[2] = obj_image->image.pitches[2];
             offset[2] = obj_image->image.offsets[2];
-            if (fourcc == VA_FOURCC('Y', 'V', '1', '6')) {
+            if (fourcc == VA_FOURCC_YV16) {
                 width[1] = obj_image->image.width / 2;
                 height[1] = obj_image->image.height;
                 width[2] = obj_image->image.width / 2;
@@ -1884,18 +1884,18 @@ gen7_pp_set_media_rw_message_surface(VADriverContextP ctx, struct i965_post_proc
     struct object_image *obj_image;
     dri_bo *bo;
     int fourcc = pp_get_surface_fourcc(ctx, surface);
-    const int U = (fourcc == VA_FOURCC('Y', 'V', '1', '2') ||
-                   fourcc == VA_FOURCC('Y', 'V', '1', '6') ||
-                   fourcc == VA_FOURCC('I', 'M', 'C', '1')) ? 2 : 1;
-    const int V = (fourcc == VA_FOURCC('Y', 'V', '1', '2') ||
-                   fourcc == VA_FOURCC('Y', 'V', '1', '6') ||
-                   fourcc == VA_FOURCC('I', 'M', 'C', '1')) ? 1 : 2;
-    int interleaved_uv = fourcc == VA_FOURCC('N', 'V', '1', '2');
-    int packed_yuv = (fourcc == VA_FOURCC('Y', 'U', 'Y', '2') || fourcc == VA_FOURCC('U', 'Y', 'V', 'Y'));
-    int rgbx_format = (fourcc == VA_FOURCC('R', 'G', 'B', 'A') || 
-                              fourcc == VA_FOURCC('R', 'G', 'B', 'X') || 
-                              fourcc == VA_FOURCC('B', 'G', 'R', 'A') || 
-                              fourcc == VA_FOURCC('B', 'G', 'R', 'X'));
+    const int U = (fourcc == VA_FOURCC_YV12 ||
+                   fourcc == VA_FOURCC_YV16 ||
+                   fourcc == VA_FOURCC_IMC1) ? 2 : 1;
+    const int V = (fourcc == VA_FOURCC_YV12 ||
+                   fourcc == VA_FOURCC_YV16 ||
+                   fourcc == VA_FOURCC_IMC1) ? 1 : 2;
+    int interleaved_uv = fourcc == VA_FOURCC_NV12;
+    int packed_yuv = (fourcc == VA_FOURCC_YUY2 || fourcc == VA_FOURCC_UYVY);
+    int rgbx_format = (fourcc == VA_FOURCC_RGBA ||
+                              fourcc == VA_FOURCC_RGBX ||
+                              fourcc == VA_FOURCC_BGRA ||
+                              fourcc == VA_FOURCC_BGRX);
 
     if (surface->type == I965_SURFACE_TYPE_SURFACE) {
         obj_surface = (struct object_surface *)surface->base;
@@ -1954,7 +1954,7 @@ gen7_pp_set_media_rw_message_surface(VADriverContextP ctx, struct i965_post_proc
             height[2] = obj_image->image.height / 2;
             pitch[2] = obj_image->image.pitches[V];
             offset[2] = obj_image->image.offsets[V];
-            if (fourcc == VA_FOURCC('Y', 'V', '1', '6')) {
+            if (fourcc == VA_FOURCC_YV16) {
                 width[1] = obj_image->image.width / 2;
                 height[1] = obj_image->image.height;
                 width[2] = obj_image->image.width / 2;
@@ -1973,8 +1973,8 @@ gen7_pp_set_media_rw_message_surface(VADriverContextP ctx, struct i965_post_proc
     		struct gen7_pp_static_parameter *pp_static_parameter = pp_context->pp_static_parameter;
 		/* the format is MSB: X-B-G-R */
 		pp_static_parameter->grf2.save_avs_rgb_swap = 0;
-		if ((fourcc == VA_FOURCC('B', 'G', 'R', 'A')) || 
-                              (fourcc == VA_FOURCC('B', 'G', 'R', 'X'))) {
+		if ((fourcc == VA_FOURCC_BGRA) ||
+                        (fourcc == VA_FOURCC_BGRX)) {
 			/* It is stored as MSB: X-R-G-B */
 			pp_static_parameter->grf2.save_avs_rgb_swap = 1;
 		}
@@ -2003,11 +2003,11 @@ gen7_pp_set_media_rw_message_surface(VADriverContextP ctx, struct i965_post_proc
         int format0 = SURFACE_FORMAT_Y8_UNORM;
 
         switch (fourcc) {
-        case VA_FOURCC('Y', 'U', 'Y', '2'):
+        case VA_FOURCC_YUY2:
             format0 = SURFACE_FORMAT_YCRCB_NORMAL;
             break;
 
-        case VA_FOURCC('U', 'Y', 'V', 'Y'):
+        case VA_FOURCC_UYVY:
             format0 = SURFACE_FORMAT_YCRCB_SWAPY;
             break;
 
@@ -2019,8 +2019,8 @@ gen7_pp_set_media_rw_message_surface(VADriverContextP ctx, struct i965_post_proc
 	    /* Only R8G8B8A8_UNORM is supported for BGRX or RGBX */
 	    format0 = SURFACE_FORMAT_R8G8B8A8_UNORM;
 	    pp_static_parameter->grf2.src_avs_rgb_swap = 0;
-	    if ((fourcc == VA_FOURCC('B', 'G', 'R', 'A')) || 
-                              (fourcc == VA_FOURCC('B', 'G', 'R', 'X'))) {
+	    if ((fourcc == VA_FOURCC_BGRA) ||
+                (fourcc == VA_FOURCC_BGRX)) {
 		pp_static_parameter->grf2.src_avs_rgb_swap = 1;
 	    }
 	}
@@ -2798,11 +2798,11 @@ static void gen7_update_src_surface_uv_offset(VADriverContextP    ctx,
     struct gen7_pp_static_parameter *pp_static_parameter = pp_context->pp_static_parameter;
     int fourcc = pp_get_surface_fourcc(ctx, surface);
     
-    if (fourcc == VA_FOURCC('Y', 'U', 'Y', '2')) {
+    if (fourcc == VA_FOURCC_YUY2) {
         pp_static_parameter->grf2.di_destination_packed_y_component_offset = 0;
         pp_static_parameter->grf2.di_destination_packed_u_component_offset = 1;
         pp_static_parameter->grf2.di_destination_packed_v_component_offset = 3;
-    } else if (fourcc == VA_FOURCC('U', 'Y', 'V', 'Y')) {
+    } else if (fourcc == VA_FOURCC_UYVY) {
         pp_static_parameter->grf2.di_destination_packed_y_component_offset = 1;
         pp_static_parameter->grf2.di_destination_packed_u_component_offset = 0;
         pp_static_parameter->grf2.di_destination_packed_v_component_offset = 2;
@@ -3004,10 +3004,10 @@ gen7_pp_plx_avs_initialize(VADriverContextP ctx, struct i965_post_processing_con
 
     if (pp_static_parameter->grf2.avs_wa_enable) {
         int src_fourcc = pp_get_surface_fourcc(ctx, src_surface);
-        if ((src_fourcc == VA_FOURCC('R', 'G', 'B', 'A')) ||
-            (src_fourcc == VA_FOURCC('R', 'G', 'B', 'X')) ||
-            (src_fourcc == VA_FOURCC('B', 'G', 'R', 'A')) ||
-            (src_fourcc == VA_FOURCC('B', 'G', 'R', 'X'))) {
+        if ((src_fourcc == VA_FOURCC_RGBA) ||
+            (src_fourcc == VA_FOURCC_RGBX) ||
+            (src_fourcc == VA_FOURCC_BGRA) ||
+            (src_fourcc == VA_FOURCC_BGRX)) {
             pp_static_parameter->grf2.avs_wa_enable = 0;
         }
     }
@@ -3593,7 +3593,7 @@ gen7_pp_nv12_dndi_initialize(VADriverContextP ctx, struct i965_post_processing_c
             i965_check_alloc_surface_bo(ctx,
                                         pp_dndi_context->current_out_obj_surface,
                                         tiling != I915_TILING_NONE,
-                                        VA_FOURCC('N','V','1','2'),
+                                        VA_FOURCC_NV12,
                                         SUBSAMPLE_YUV420);
         }
 
@@ -4708,7 +4708,7 @@ i965_vpp_clear_surface(VADriverContextP ctx,
     int region_width, region_height;
 
     /* Currently only support NV12 surface */
-    if (!obj_surface || obj_surface->fourcc != VA_FOURCC('N', 'V', '1', '2'))
+    if (!obj_surface || obj_surface->fourcc != VA_FOURCC_NV12)
         return;
 
     rgb_to_yuv(color, &y, &u, &v, &a);
@@ -4796,8 +4796,8 @@ i965_scaling_processing(
     VAStatus va_status = VA_STATUS_SUCCESS;
     struct i965_driver_data *i965 = i965_driver_data(ctx);
  
-    assert(src_surface_obj->fourcc == VA_FOURCC('N', 'V', '1', '2'));
-    assert(dst_surface_obj->fourcc == VA_FOURCC('N', 'V', '1', '2'));
+    assert(src_surface_obj->fourcc == VA_FOURCC_NV12);
+    assert(dst_surface_obj->fourcc == VA_FOURCC_NV12);
 
     if (HAS_PP(i965) && (flags & I965_PP_FLAG_AVS)) {
         struct i965_surface src_surface;
@@ -4848,7 +4848,7 @@ i965_post_processing(
         struct i965_surface dst_surface;
 
         /* Currently only support post processing for NV12 surface */
-        if (obj_surface->fourcc != VA_FOURCC('N', 'V', '1', '2'))
+        if (obj_surface->fourcc != VA_FOURCC_NV12)
             return out_surface_id;
 
         _i965LockMutex(&i965->pp_mutex);
@@ -4868,7 +4868,7 @@ i965_post_processing(
             assert(status == VA_STATUS_SUCCESS);
             obj_surface = SURFACE(out_surface_id);
             assert(obj_surface);
-            i965_check_alloc_surface_bo(ctx, obj_surface, 0, VA_FOURCC('N','V','1','2'), SUBSAMPLE_YUV420);
+            i965_check_alloc_surface_bo(ctx, obj_surface, 0, VA_FOURCC_NV12, SUBSAMPLE_YUV420);
             i965_vpp_clear_surface(ctx, i965->pp_context, obj_surface, 0); 
 
             dst_surface.base = (struct object_base *)obj_surface;
@@ -4904,7 +4904,7 @@ i965_post_processing(
             assert(status == VA_STATUS_SUCCESS);
             obj_surface = SURFACE(out_surface_id);
             assert(obj_surface);
-            i965_check_alloc_surface_bo(ctx, obj_surface, 0, VA_FOURCC('N','V','1','2'), SUBSAMPLE_YUV420);
+            i965_check_alloc_surface_bo(ctx, obj_surface, 0, VA_FOURCC_NV12, SUBSAMPLE_YUV420);
             i965_vpp_clear_surface(ctx, i965->pp_context, obj_surface, 0); 
 
             dst_surface.base = (struct object_base *)obj_surface;
@@ -4968,7 +4968,7 @@ i965_image_plx_nv12_plx_processing(VADriverContextP ctx,
     assert(status == VA_STATUS_SUCCESS);
     obj_surface = SURFACE(tmp_surface_id);
     assert(obj_surface);
-    i965_check_alloc_surface_bo(ctx, obj_surface, 0, VA_FOURCC('N', 'V', '1', '2'), SUBSAMPLE_YUV420);
+    i965_check_alloc_surface_bo(ctx, obj_surface, 0, VA_FOURCC_NV12, SUBSAMPLE_YUV420);
 
     tmp_surface.base = (struct object_base *)obj_surface;
     tmp_surface.type = I965_SURFACE_TYPE_SURFACE;
@@ -5008,7 +5008,7 @@ i965_image_pl1_rgbx_processing(VADriverContextP ctx,
     VAStatus vaStatus;
 
     switch (fourcc) {
-    case VA_FOURCC('N', 'V', '1', '2'):
+    case VA_FOURCC_NV12:
         vaStatus = i965_post_processing_internal(ctx, i965->pp_context,
                                                  src_surface,
                                                  src_rect,
@@ -5045,7 +5045,7 @@ i965_image_pl3_processing(VADriverContextP ctx,
     VAStatus vaStatus = VA_STATUS_ERROR_UNIMPLEMENTED;
 
     switch (fourcc) {
-    case VA_FOURCC('N', 'V', '1', '2'):
+    case VA_FOURCC_NV12:
         vaStatus = i965_post_processing_internal(ctx, i965->pp_context,
                                                  src_surface,
                                                  src_rect,
@@ -5056,10 +5056,10 @@ i965_image_pl3_processing(VADriverContextP ctx,
         intel_batchbuffer_flush(pp_context->batch);
         break;
 
-    case VA_FOURCC('I', 'M', 'C', '1'):
-    case VA_FOURCC('I', 'M', 'C', '3'):
-    case VA_FOURCC('Y', 'V', '1', '2'):
-    case VA_FOURCC('I', '4', '2', '0'):
+    case VA_FOURCC_IMC1:
+    case VA_FOURCC_IMC3:
+    case VA_FOURCC_YV12:
+    case VA_FOURCC_I420:
         vaStatus = i965_post_processing_internal(ctx, i965->pp_context,
                                                  src_surface,
                                                  src_rect,
@@ -5070,8 +5070,8 @@ i965_image_pl3_processing(VADriverContextP ctx,
         intel_batchbuffer_flush(pp_context->batch);
         break;
 
-    case VA_FOURCC('Y', 'U', 'Y', '2'):
-    case VA_FOURCC('U', 'Y', 'V', 'Y'):
+    case VA_FOURCC_YUY2:
+    case VA_FOURCC_UYVY:
         vaStatus = i965_post_processing_internal(ctx, i965->pp_context,
                                                  src_surface,
                                                  src_rect,
@@ -5108,7 +5108,7 @@ i965_image_pl2_processing(VADriverContextP ctx,
     VAStatus vaStatus = VA_STATUS_ERROR_UNIMPLEMENTED;
 
     switch (fourcc) {
-    case VA_FOURCC('N', 'V', '1', '2'):
+    case VA_FOURCC_NV12:
         vaStatus = i965_post_processing_internal(ctx, i965->pp_context,
                                                  src_surface,
                                                  src_rect,
@@ -5118,10 +5118,10 @@ i965_image_pl2_processing(VADriverContextP ctx,
                                                  NULL);
         break;
 
-    case VA_FOURCC('I', 'M', 'C', '1'):
-    case VA_FOURCC('I', 'M', 'C', '3'):
-    case VA_FOURCC('Y', 'V', '1', '2'):
-    case VA_FOURCC('I', '4', '2', '0'):
+    case VA_FOURCC_IMC1:
+    case VA_FOURCC_IMC3:
+    case VA_FOURCC_YV12:
+    case VA_FOURCC_I420:
         vaStatus = i965_post_processing_internal(ctx, i965->pp_context,
                                                  src_surface,
                                                  src_rect,
@@ -5131,8 +5131,8 @@ i965_image_pl2_processing(VADriverContextP ctx,
                                                  NULL);
         break;
 
-    case VA_FOURCC('Y', 'U', 'Y', '2'):
-    case VA_FOURCC('U', 'Y', 'V', 'Y'):
+    case VA_FOURCC_YUY2:
+    case VA_FOURCC_UYVY:
         vaStatus = i965_post_processing_internal(ctx, i965->pp_context,
                                                  src_surface,
                                                  src_rect,
@@ -5142,10 +5142,10 @@ i965_image_pl2_processing(VADriverContextP ctx,
                                                  NULL);
         break;
 
-    case VA_FOURCC('B', 'G', 'R', 'X'):
-    case VA_FOURCC('B', 'G', 'R', 'A'):
-    case VA_FOURCC('R', 'G', 'B', 'X'):
-    case VA_FOURCC('R', 'G', 'B', 'A'):
+    case VA_FOURCC_BGRX:
+    case VA_FOURCC_BGRA:
+    case VA_FOURCC_RGBX:
+    case VA_FOURCC_RGBA:
         vaStatus = i965_post_processing_internal(ctx, i965->pp_context,
                                                  src_surface,
                                                  src_rect,
@@ -5177,7 +5177,7 @@ i965_image_pl1_processing(VADriverContextP ctx,
     VAStatus vaStatus;
 
     switch (fourcc) {
-    case VA_FOURCC('N', 'V', '1', '2'):
+    case VA_FOURCC_NV12:
         vaStatus = i965_post_processing_internal(ctx, i965->pp_context,
                                                  src_surface,
                                                  src_rect,
@@ -5188,7 +5188,7 @@ i965_image_pl1_processing(VADriverContextP ctx,
         intel_batchbuffer_flush(pp_context->batch);
         break;
 
-    case VA_FOURCC('Y', 'V', '1', '2'):
+    case VA_FOURCC_YV12:
         vaStatus = i965_post_processing_internal(ctx, i965->pp_context,
                                                  src_surface,
                                                  src_rect,
@@ -5199,8 +5199,8 @@ i965_image_pl1_processing(VADriverContextP ctx,
         intel_batchbuffer_flush(pp_context->batch);
         break;
 
-    case VA_FOURCC('Y', 'U', 'Y', '2'):
-    case VA_FOURCC('U', 'Y', 'V', 'Y'):
+    case VA_FOURCC_YUY2:
+    case VA_FOURCC_UYVY:
         vaStatus = i965_post_processing_internal(ctx, i965->pp_context,
                                                  src_surface,
                                                  src_rect,
@@ -5240,15 +5240,15 @@ i965_image_processing(VADriverContextP ctx,
         _i965LockMutex(&i965->pp_mutex);
 
         switch (fourcc) {
-        case VA_FOURCC('Y', 'V', '1', '2'):
-        case VA_FOURCC('I', '4', '2', '0'):
-        case VA_FOURCC('I', 'M', 'C', '1'):
-        case VA_FOURCC('I', 'M', 'C', '3'):
-        case VA_FOURCC('4', '2', '2', 'H'):
-        case VA_FOURCC('4', '2', '2', 'V'):
-        case VA_FOURCC('4', '1', '1', 'P'):
-        case VA_FOURCC('4', '4', '4', 'P'):
-        case VA_FOURCC('Y', 'V', '1', '6'):
+        case VA_FOURCC_YV12:
+        case VA_FOURCC_I420:
+        case VA_FOURCC_IMC1:
+        case VA_FOURCC_IMC3:
+        case VA_FOURCC_422H:
+        case VA_FOURCC_422V:
+        case VA_FOURCC_411P:
+        case VA_FOURCC_444P:
+        case VA_FOURCC_YV16:
             status = i965_image_pl3_processing(ctx,
                                                src_surface,
                                                src_rect,
@@ -5256,25 +5256,25 @@ i965_image_processing(VADriverContextP ctx,
                                                dst_rect);
             break;
 
-        case  VA_FOURCC('N', 'V', '1', '2'):
+        case  VA_FOURCC_NV12:
             status = i965_image_pl2_processing(ctx,
                                                src_surface,
                                                src_rect,
                                                dst_surface,
                                                dst_rect);
             break;
-        case VA_FOURCC('Y', 'U', 'Y', '2'):
-        case VA_FOURCC('U', 'Y', 'V', 'Y'):
+        case VA_FOURCC_YUY2:
+        case VA_FOURCC_UYVY:
             status = i965_image_pl1_processing(ctx,
                                                src_surface,
                                                src_rect,
                                                dst_surface,
                                                dst_rect);
             break;
-        case VA_FOURCC('B', 'G', 'R', 'A'):
-        case VA_FOURCC('B', 'G', 'R', 'X'):
-        case VA_FOURCC('R', 'G', 'B', 'A'):
-        case VA_FOURCC('R', 'G', 'B', 'X'):
+        case VA_FOURCC_BGRA:
+        case VA_FOURCC_BGRX:
+        case VA_FOURCC_RGBA:
+        case VA_FOURCC_RGBX:
             status = i965_image_pl1_rgbx_processing(ctx,
                                                src_surface,
                                                src_rect,
@@ -5526,7 +5526,7 @@ i965_proc_picture(VADriverContextP ctx,
     src_surface.flags = proc_frame_to_pp_frame[pipeline_param->filter_flags & 0x3];
 
     VASurfaceID out_surface_id = VA_INVALID_ID;
-    if (obj_surface->fourcc != VA_FOURCC('N', 'V', '1', '2')) {
+    if (obj_surface->fourcc != VA_FOURCC_NV12) {
         src_surface.base = (struct object_base *)obj_surface;
         src_surface.type = I965_SURFACE_TYPE_SURFACE;
         src_surface.flags = I965_SURFACE_FLAG_FRAME;
@@ -5545,7 +5545,7 @@ i965_proc_picture(VADriverContextP ctx,
         tmp_surfaces[num_tmp_surfaces++] = out_surface_id;
         obj_surface = SURFACE(out_surface_id);
         assert(obj_surface);
-        i965_check_alloc_surface_bo(ctx, obj_surface, !!tiling, VA_FOURCC('N', 'V', '1', '2'), SUBSAMPLE_YUV420);
+        i965_check_alloc_surface_bo(ctx, obj_surface, !!tiling, VA_FOURCC_NV12, SUBSAMPLE_YUV420);
 
         dst_surface.base = (struct object_base *)obj_surface;
         dst_surface.type = I965_SURFACE_TYPE_SURFACE;
@@ -5623,7 +5623,7 @@ i965_proc_picture(VADriverContextP ctx,
             tmp_surfaces[num_tmp_surfaces++] = out_surface_id;
             obj_surface = SURFACE(out_surface_id);
             assert(obj_surface);
-            i965_check_alloc_surface_bo(ctx, obj_surface, !!tiling, VA_FOURCC('N','V','1','2'), SUBSAMPLE_YUV420);
+            i965_check_alloc_surface_bo(ctx, obj_surface, !!tiling, VA_FOURCC_NV12, SUBSAMPLE_YUV420);
             dst_surface.base = (struct object_base *)obj_surface;
             dst_surface.type = I965_SURFACE_TYPE_SURFACE;
             status = i965_post_processing_internal(ctx, &proc_context->pp_context,
@@ -5651,7 +5651,7 @@ i965_proc_picture(VADriverContextP ctx,
     }
 
     int csc_needed = 0;
-    if (obj_surface->fourcc && obj_surface->fourcc !=  VA_FOURCC('N','V','1','2')){
+    if (obj_surface->fourcc && obj_surface->fourcc !=  VA_FOURCC_NV12){
         csc_needed = 1;
         out_surface_id = VA_INVALID_ID;
         status = i965_CreateSurfaces(ctx,
@@ -5664,10 +5664,10 @@ i965_proc_picture(VADriverContextP ctx,
         tmp_surfaces[num_tmp_surfaces++] = out_surface_id;
         struct object_surface *csc_surface = SURFACE(out_surface_id);
         assert(csc_surface);
-        i965_check_alloc_surface_bo(ctx, csc_surface, !!tiling, VA_FOURCC('N','V','1','2'), SUBSAMPLE_YUV420);
+        i965_check_alloc_surface_bo(ctx, csc_surface, !!tiling, VA_FOURCC_NV12, SUBSAMPLE_YUV420);
         dst_surface.base = (struct object_base *)csc_surface;
     } else {
-        i965_check_alloc_surface_bo(ctx, obj_surface, !!tiling, VA_FOURCC('N','V','1','2'), SUBSAMPLE_YUV420);
+        i965_check_alloc_surface_bo(ctx, obj_surface, !!tiling, VA_FOURCC_NV12, SUBSAMPLE_YUV420);
         dst_surface.base = (struct object_base *)obj_surface;
     }
 
@@ -5675,7 +5675,7 @@ i965_proc_picture(VADriverContextP ctx,
 
     int blending_needed = 0;
     if (HAS_BLENDING(i965) && pipeline_param->blend_state &&
-        obj_surface->fourcc == VA_FOURCC('N','V','1','2')){
+        obj_surface->fourcc == VA_FOURCC_NV12){
         blending_needed = 1;
 
         const VABlendState *blend_state = pipeline_param->blend_state;

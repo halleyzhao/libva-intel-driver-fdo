@@ -330,12 +330,13 @@ static struct hw_codec_info gen75_hw_codec_info = {
     .has_h264_mvc_decoding = 1,
     .has_h264_mvc_encoding = 1,
 
-    .num_filters = 4,
+    .num_filters = 5,
     .filters = {
         { VAProcFilterNoiseReduction, I965_RING_VEBOX },
         { VAProcFilterDeinterlacing, I965_RING_VEBOX },
         { VAProcFilterSharpening, I965_RING_NULL },
         { VAProcFilterColorBalance, I965_RING_VEBOX},
+        { VAProcFilterSkinToneEnhancement, I965_RING_VEBOX},
     },
 };
 
@@ -364,12 +365,13 @@ static struct hw_codec_info gen8_hw_codec_info = {
     .has_h264_mvc_decoding = 1,
     .has_h264_mvc_encoding = 1,
 
-    .num_filters = 4,
+    .num_filters = 5,
     .filters = {
         { VAProcFilterNoiseReduction, I965_RING_VEBOX },
         { VAProcFilterDeinterlacing, I965_RING_VEBOX },
         { VAProcFilterSharpening, I965_RING_NULL }, /* need to rebuild the shader for BDW */
         { VAProcFilterColorBalance, I965_RING_VEBOX},
+        { VAProcFilterSkinToneEnhancement, I965_RING_VEBOX},
     },
 };
 
@@ -5166,6 +5168,9 @@ VAStatus i965_QueryVideoProcPipelineCaps(
             if (deint->algorithm == VAProcDeinterlacingMotionAdaptive ||
                 deint->algorithm == VAProcDeinterlacingMotionCompensated);
                 pipeline_cap->num_forward_references++;
+        } else if (base->type == VAProcFilterSkinToneEnhancement) {
+                VAProcFilterParameterBuffer *stde = (VAProcFilterParameterBuffer *)base;
+                (void)stde;
         }
     }
 

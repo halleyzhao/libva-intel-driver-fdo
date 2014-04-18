@@ -43,10 +43,10 @@
 
 #define HAS_BLENDING(ctx) ((ctx)->codec_info->has_blending)
 
-#define HAS_PP(ctx) (IS_IRONLAKE((ctx)->intel.device_id) ||     \
-                     IS_GEN6((ctx)->intel.device_id) ||         \
-                     IS_GEN7((ctx)->intel.device_id) ||         \
-                     IS_GEN8((ctx)->intel.device_id))
+#define HAS_PP(ctx) (IS_IRONLAKE((ctx)->intel.device_info) ||     \
+                     IS_GEN6((ctx)->intel.device_info) ||         \
+                     IS_GEN7((ctx)->intel.device_info) ||         \
+                     IS_GEN8((ctx)->intel.device_info))
 
 
 #define SURFACE_STATE_PADDED_SIZE               SURFACE_STATE_PADDED_SIZE_GEN8
@@ -1364,7 +1364,7 @@ gen8_pp_curbe_load(VADriverContextP ctx,
     struct i965_driver_data *i965 = i965_driver_data(ctx);
     int param_size = 64;
 
-    if (IS_GEN8(i965->intel.device_id))
+    if (IS_GEN8(i965->intel.device_info))
         param_size = sizeof(struct gen7_pp_static_parameter);
 
     BEGIN_BATCH(batch, 4);
@@ -1388,7 +1388,7 @@ gen8_pp_object_walker(VADriverContextP ctx,
     unsigned int *command_ptr;
 
     param_size = sizeof(struct gen7_pp_inline_parameter);
-    if (IS_GEN8(i965->intel.device_id))
+    if (IS_GEN8(i965->intel.device_info))
         param_size = sizeof(struct gen7_pp_inline_parameter);
 
     x_steps = pp_context->pp_x_steps(pp_context->private_context);
@@ -1430,7 +1430,7 @@ gen8_pp_object_walker(VADriverContextP ctx,
 
     dri_bo_unmap(command_buffer);
 
-    if (IS_GEN8(i965->intel.device_id)) {
+    if (IS_GEN8(i965->intel.device_info)) {
 	BEGIN_BATCH(batch, 3);
 	OUT_BATCH(batch, MI_BATCH_BUFFER_START | (1 << 8) | (1 << 0));
 	OUT_RELOC(batch, command_buffer,
@@ -1555,7 +1555,7 @@ gen8_post_processing_context_init(VADriverContextP ctx,
 
     assert(NUM_PP_MODULES == ARRAY_ELEMS(pp_modules_gen8));
 
-    if (IS_GEN8(i965->intel.device_id))
+    if (IS_GEN8(i965->intel.device_info))
         memcpy(pp_context->pp_modules, pp_modules_gen8, sizeof(pp_context->pp_modules));
     else {
         /* should never get here !!! */
@@ -1609,7 +1609,7 @@ gen8_post_processing_context_init(VADriverContextP ctx,
     dri_bo_unmap(pp_context->instruction_state.bo);
 
     /* static & inline parameters */
-    if (IS_GEN8(i965->intel.device_id)) {
+    if (IS_GEN8(i965->intel.device_info)) {
         pp_context->pp_static_parameter = calloc(sizeof(struct gen7_pp_static_parameter), 1);
         pp_context->pp_inline_parameter = calloc(sizeof(struct gen7_pp_inline_parameter), 1);
     }

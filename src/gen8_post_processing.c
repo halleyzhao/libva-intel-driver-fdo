@@ -43,12 +43,6 @@
 
 #define HAS_BLENDING(ctx) ((ctx)->codec_info->has_blending)
 
-#define HAS_PP(ctx) (IS_IRONLAKE((ctx)->intel.device_info) ||     \
-                     IS_GEN6((ctx)->intel.device_info) ||         \
-                     IS_GEN7((ctx)->intel.device_info) ||         \
-                     IS_GEN8((ctx)->intel.device_info))
-
-
 #define SURFACE_STATE_PADDED_SIZE               SURFACE_STATE_PADDED_SIZE_GEN8
 
 #define SURFACE_STATE_OFFSET(index)             (SURFACE_STATE_PADDED_SIZE * index)

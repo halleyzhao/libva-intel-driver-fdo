@@ -4776,6 +4776,79 @@ i965_QuerySurfaceAttributes(VADriverContextP ctx,
     return vaStatus;
 }
 
+/** Acquires buffer handle for external API usage */
+static VAStatus
+i965_AcquireBufferHandle(VADriverContextP ctx, VABufferID buf_id,
+    VABufferInfo *buf_info)
+{
+    struct i965_driver_data * const i965 = i965_driver_data(ctx);
+    struct object_buffer * const obj_buffer = BUFFER(buf_id);
+    struct buffer_store *buffer_store;
+    uint32_t i, mem_type;
+
+    /* List of supported memory types, in preferred order */
+    static const uint32_t mem_types[] = {
+        VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME,
+        VA_SURFACE_ATTRIB_MEM_TYPE_KERNEL_DRM,
+        0
+    };
+
+    if (!obj_buffer)
+        return VA_STATUS_ERROR_INVALID_BUFFER;
+    if (!buf_info)
+        return VA_STATUS_ERROR_INVALID_PARAMETER;
+
+    if (!buf_info->mem_type)
+        mem_type = mem_types[0];
+    else {
+        mem_type = 0;
+        for (i = 0; mem_types[i] != 0; i++) {
+            if (buf_info->mem_type & mem_types[i]) {
+                mem_type = buf_info->mem_type;
+                break;
+            }
+        }
+        if (!mem_type)
+            return VA_STATUS_ERROR_UNSUPPORTED_MEMORY_TYPE;
+    }
+
+    buffer_store = obj_buffer->buffer_store;
+    if (!buffer_store || !buffer_store->bo)
+        return VA_STATUS_ERROR_INVALID_BUFFER;
+    switch (mem_type) {
+    case VA_SURFACE_ATTRIB_MEM_TYPE_KERNEL_DRM: {
+        uint32_t name;
+        if (drm_intel_bo_flink(buffer_store->bo, &name) != 0)
+            return VA_STATUS_ERROR_INVALID_BUFFER;
+        buf_info->handle = name;
+        break;
+    }
+    case VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME: {
+        int fd;
+        if (drm_intel_bo_gem_export_to_prime(buffer_store->bo, &fd) != 0)
+            return VA_STATUS_ERROR_INVALID_BUFFER;
+        buf_info->handle = (intptr_t)fd;
+        break;
+    }
+    }
+    buf_info->type = obj_buffer->type;
+    buf_info->mem_type = mem_type;
+    buf_info->mem_size = obj_buffer->num_elements * obj_buffer->size_element;
+    return VA_STATUS_SUCCESS;
+}
+
+/** Releases buffer handle after usage from external API */
+static VAStatus
+i965_ReleaseBufferHandle(VADriverContextP ctx, VABufferID buf_id)
+{
+    struct i965_driver_data * const i965 = i965_driver_data(ctx);
+    struct object_buffer * const obj_buffer = BUFFER(buf_id);
+
+    if (!obj_buffer)
+        return VA_STATUS_ERROR_INVALID_BUFFER;
+    return VA_STATUS_SUCCESS;
+}
+
 static int
 i965_os_has_ring_support(VADriverContextP ctx,
                          int ring)
@@ -5305,6 +5378,10 @@ VA_DRIVER_INIT_FUNC(  VADriverContextP ctx )
     vtable->vaGetSurfaceAttributes = i965_GetSurfaceAttributes;
     vtable->vaQuerySurfaceAttributes = i965_QuerySurfaceAttributes;
     vtable->vaCreateSurfaces2 = i965_CreateSurfaces2;
+
+    /* 0.35.0 */
+    vtable->vaAcquireBufferHandle = i965_AcquireBufferHandle;
+    vtable->vaReleaseBufferHandle = i965_ReleaseBufferHandle;
 
     vtable_vpp->vaQueryVideoProcFilters = i965_QueryVideoProcFilters;
     vtable_vpp->vaQueryVideoProcFilterCaps = i965_QueryVideoProcFilterCaps;

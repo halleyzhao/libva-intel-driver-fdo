@@ -4798,6 +4798,10 @@ i965_AcquireBufferHandle(VADriverContextP ctx, VABufferID buf_id,
     if (!buf_info)
         return VA_STATUS_ERROR_INVALID_PARAMETER;
 
+    assert(obj_buffer->type == VAImageBufferType);
+    if (obj_buffer->type != VAImageBufferType)
+        return VA_STATUS_ERROR_INVALID_BUFFER;
+
     if (!buf_info->mem_type)
         mem_type = mem_types[0];
     else {
@@ -4834,6 +4838,10 @@ i965_AcquireBufferHandle(VADriverContextP ctx, VABufferID buf_id,
     buf_info->type = obj_buffer->type;
     buf_info->mem_type = mem_type;
     buf_info->mem_size = obj_buffer->num_elements * obj_buffer->size_element;
+
+    // XXX, a flag should be added to object_buffer to indicate that the buffer is using by external ones or not
+    // drm_intel_bo_wait_rendering(buffer_store->bo);
+
     return VA_STATUS_SUCCESS;
 }
 
@@ -4846,6 +4854,8 @@ i965_ReleaseBufferHandle(VADriverContextP ctx, VABufferID buf_id)
 
     if (!obj_buffer)
         return VA_STATUS_ERROR_INVALID_BUFFER;
+
+    // XXX, unset the flag mentioned in i965_AcquireBufferHandle
     return VA_STATUS_SUCCESS;
 }
 
